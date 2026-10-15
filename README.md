@@ -62,7 +62,7 @@ curl http://127.0.0.1:8787/v1/audio/transcriptions -F model=qwen3-asr -F file=@s
 3. Set the model name to the name of the model **as configured in LiteLLM**, e.g. `qwen3-asr`.
    If OpenWhispr doesn't let you change it, or sends something like `whisper-1`, start the proxy
    with `--model qwen3-asr` and it will rewrite the model field for you.
-4. Dictate something. The proxy terminal should show
+4. Dictate something. The proxy log (terminal, or `journalctl --user -u litellm-auth-proxy -f` if installed as a service) should show
    `-> POST https://your-litellm-host:4000/v1/audio/transcriptions = 200`.
 
 ## Run it in the background (Linux, systemd)
