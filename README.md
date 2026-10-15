@@ -65,27 +65,37 @@ curl http://127.0.0.1:8787/v1/audio/transcriptions -F model=qwen3-asr -F file=@s
 4. Dictate something. The proxy terminal should show
    `-> POST https://your-litellm-host:4000/v1/audio/transcriptions = 200`.
 
-## Run it in the background (Linux, systemd user service)
+## Run it in the background (Linux, systemd)
 
-`~/.config/systemd/user/litellm-auth-proxy.service`:
-
-```ini
-[Unit]
-Description=LiteLLM auth proxy for OpenWhispr
-
-[Service]
-Environment=LITELLM_API_KEY=sk-...
-ExecStart=/usr/bin/python3 /path/to/litellm_auth_proxy.py --model qwen3-asr -q
-Restart=on-failure
-
-[Install]
-WantedBy=default.target
-```
+`install.sh` sets the proxy up as a systemd **user** service, so it starts automatically when you
+log in and restarts if it crashes — no terminal needed.
 
 ```bash
-systemctl --user daemon-reload
-systemctl --user enable --now litellm-auth-proxy
+# 1. set LITELLM_URL in litellm_auth_proxy.py first, then:
+./install.sh                     # prompts for the API key (hidden) and optional model name
+# or non-interactively:
+LITELLM_API_KEY=sk-... LITELLM_MODEL=qwen3-asr ./install.sh
 ```
+
+What it does:
+- Stores the key (and model) in `~/.config/litellm-auth-proxy/env` with `600` permissions.
+- Writes `~/.config/systemd/user/litellm-auth-proxy.service`, which runs the script **from this
+  repo directory** — so don't move or delete the checkout after installing.
+- Enables and starts the service.
+
+Re-run `./install.sh` to change the key or model; it keeps the existing values unless you give new ones.
+
+Day-to-day:
+
+```bash
+systemctl --user status litellm-auth-proxy
+journalctl --user -u litellm-auth-proxy -f        # live logs
+systemctl --user restart litellm-auth-proxy       # after editing LITELLM_URL
+./uninstall.sh                                    # stop, remove the service and stored key
+```
+
+User services run while you're logged in, which is what you want for a desktop app like OpenWhispr.
+To keep it running without a login session: `sudo loginctl enable-linger $USER`.
 
 ## Notes / limitations
 
